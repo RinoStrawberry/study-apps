@@ -1,7 +1,7 @@
 {
- "name": "외국어 공부",
- "short_name": "외국어 공부",
- "description": "영어·일본어 따라쓰기와 단어 사전 학습 앱",
+ "name": "영어·일본어 공부",
+ "short_name": "영어·일본어 공부",
+ "description": " 학습 앱",
  "start_url": "./",
  "scope": "./",
  "display": "standalone",

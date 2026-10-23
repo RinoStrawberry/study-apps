@@ -1,7 +1,7 @@
 {
- "name": "컴활 1급 학습실",
- "short_name": "컴활 1급",
- "description": "컴퓨터활용능력 1급 학습 앱",
+ "name": "컴퓨터활용능력 1급",
+ "short_name": "컴퓨터활용능력 1급",
+ "description": " 학습 앱",
  "start_url": "./",
  "scope": "./",
  "display": "standalone",

@@ -1,7 +1,7 @@
 {
- "name": "한국사 1급 학습실",
- "short_name": "한국사 1급",
- "description": "한국사능력검정시험 심화(1급) 학습 앱",
+ "name": "한국사능력검정시험 심화",
+ "short_name": "한국사능력검정시험 심화",
+ "description": " 학습 앱",
  "start_url": "./",
  "scope": "./",
  "display": "standalone",

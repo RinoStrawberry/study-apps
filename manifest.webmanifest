@@ -1,7 +1,7 @@
 {
- "name": "자격시험 학습실",
+ "name": "학습실",
  "short_name": "학습실",
- "description": "컴퓨터활용능력 1급·한국사능력검정시험 심화 학습 앱",
+ "description": "컴퓨터활용능력 1급·한국사능력검정시험 심화·영어·일본어 공부",
  "start_url": "./",
  "scope": "./",
  "display": "standalone",
