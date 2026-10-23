@@ -26,8 +26,25 @@
     return String(e);
   }
 
-  // ---- 탭 전환 ----
+  // ---- 앱 고르기(위 줄) · 갈래 탭(아래 줄) ----
+  // 위 줄에서 외국어 공부·컴활 1급·한국사 1급 중 하나를 고르고, 아래 줄은 고른 앱의 갈래다.
+  // 자격시험 앱은 갈래를 자기 화면 안에 갖고 있어 아래 줄을 접는다.
+  var EXAM_APPS = { computer: ["frameComputer", "apps/computer.html"],
+                    history2: ["frameHistory2", "apps/history.html"] };
+  var EXAM_KEY = { computer: "kh-computer-1", history2: "hist1" };   // 시험앱이 쓰는 저장키
+  var 외국어갈래 = "today";   // 외국어 공부로 돌아왔을 때 다시 펼칠 갈래
+
+  var 지금앱 = "language";   // 지금 보고 있는 앱 — 테마를 누구에게 맞출지 정한다
+
   function setTab(name) {
+    외국어갈래 = name;
+    지금앱 = "language";
+    호스트테마("light");       // 외국어 공부 화면은 밝은 결 하나로 둔다
+    document.querySelectorAll("#appSeg .appseg-btn").forEach(function (b) {
+      b.setAttribute("aria-selected", String(b.dataset.app === "language"));
+    });
+    document.getElementById("navTabs").classList.remove("hidden");
+    document.querySelector(".content").classList.remove("app-mode");
     document.querySelectorAll("#navTabs .k-tab").forEach(function (b) {
       b.setAttribute("aria-selected", String(b.dataset.tab === name));
     });
@@ -41,20 +58,110 @@
     setTab(b.dataset.tab);
     // 기록 탭은 시작할 때 한 번만 불러오면 그 뒤에 쌓인 글이 안 보이므로, 누를 때마다 새로 읽는다.
     if (b.dataset.tab === "history") loadHistory();
-    mountExamApp(b.dataset.tab);
   });
 
-  // 자격시험 앱은 단일 파일 HTML 이라 창 안에 그대로 띄운다. 처음 누를 때 한 번만 읽는다.
-  var EXAM_APPS = { computer: ["frameComputer", "apps/computer.html"],
-                    history2: ["frameHistory2", "apps/history.html"] };
-  function mountExamApp(tab) {
-    var spec = EXAM_APPS[tab];
+  // ---- 자격시험 앱 기록: 참 기록은 파이썬이 들고 있다 ----
+  // 창(WebView2)이 InPrivate 로 뜨는 탓에 브라우저 저장소는 창을 닫으면 지워진다. 그래서
+  // 띄우기 전에 파이썬에 둔 기록을 저장소에 심고, 프레임 안에서 바뀐 것은 storage 사건으로
+  // 받아 다시 파이썬에 적는다. 시험앱 쪽 코드는 한 줄도 건드리지 않는다.
+  var 보낼것 = {};          // 저장키 -> {이름: 값(또는 null=지움)}
+  var 보내기예약 = null;
+
+  function 저장소키(저장키, 이름) { return "kh1:" + 저장키 + ":" + 이름; }
+
+  function 심기(저장키) {
+    if (!저장키) return Promise.resolve();
+    return api().exam_load(저장키).then(function (res) {
+      var 자료 = (res && res.자료) || {};
+      Object.keys(자료).forEach(function (이름) {
+        try {
+          localStorage.setItem(저장소키(저장키, 이름), JSON.stringify({ v: 1, d: 자료[이름] }));
+        } catch (e) { /* 저장소를 못 쓰면 기록 없이 뜬다 */ }
+      });
+    });
+  }
+
+  function 흘리기() {
+    보내기예약 = null;
+    Object.keys(보낼것).forEach(function (저장키) {
+      var 묶음 = 보낼것[저장키];
+      delete 보낼것[저장키];
+      api().exam_write(저장키, 묶음)["catch"](function () { /* 다음 쓰기에서 다시 간다 */ });
+    });
+  }
+
+  window.addEventListener("storage", function (e) {
+    if (!e.key || e.key.indexOf("kh1:") !== 0) return;
+    var 나머지 = e.key.slice(4);
+    var 자리 = 나머지.indexOf(":");
+    if (자리 < 0) return;
+    var 저장키 = 나머지.slice(0, 자리);
+    var 이름 = 나머지.slice(자리 + 1);
+    if (이름 === "__t") return;                      // 엔진이 저장소를 쓸 수 있나 보는 검사키
+    if (저장키 !== EXAM_KEY.computer && 저장키 !== EXAM_KEY.history2) return;
+    var 값 = null;
+    if (e.newValue !== null) {
+      try {
+        var 봉투 = JSON.parse(e.newValue);
+        값 = (봉투 && 봉투.d !== undefined) ? 봉투.d : 봉투;
+      } catch (err) { return; }
+    }
+    if (!보낼것[저장키]) 보낼것[저장키] = {};
+    보낼것[저장키][이름] = 값;
+    if (보내기예약) clearTimeout(보내기예약);
+    보내기예약 = setTimeout(흘리기, 150);
+    if (이름 === "설정" && EXAM_KEY[지금앱] === 저장키) 호스트테마(테마읽기(값));
+  });
+  window.addEventListener("pagehide", 흘리기);
+
+  // ---- 테마: 보고 있는 시험앱이 어두우면 학습실 상단바도 따라 어두워진다 ----
+  function 테마읽기(설정) { return (설정 && 설정.테마) || "auto"; }
+
+  function 시험앱테마(저장키) {
+    try {
+      var raw = localStorage.getItem(저장소키(저장키, "설정"));
+      if (!raw) return "auto";
+      var 봉투 = JSON.parse(raw);
+      return 테마읽기(봉투 && 봉투.d !== undefined ? 봉투.d : 봉투);
+    } catch (e) { return "auto"; }
+  }
+
+  function 호스트테마(테마) {
+    var 어둡게 = 테마 === "dark" || (테마 === "auto" && window.matchMedia &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches);
+    document.documentElement.setAttribute("data-theme", 어둡게 ? "dark" : "light");
+  }
+
+  function mountExamApp(app) {
+    var spec = EXAM_APPS[app];
     if (!spec) return;
     var el = document.getElementById(spec[0]);
     if (!el || el.dataset.loaded === "1") return;
     el.dataset.loaded = "1";
-    el.src = spec[1];
+    function 띄우기() { el.src = spec[1]; 호스트테마(시험앱테마(EXAM_KEY[app])); }
+    // 엔진은 뜨자마자 저장소를 동기로 읽는다 — 심기가 반드시 먼저다.
+    심기(EXAM_KEY[app]).then(띄우기, 띄우기);
   }
+
+  function setApp(app) {
+    if (!EXAM_APPS[app]) { setTab(외국어갈래); if (외국어갈래 === "history") loadHistory(); return; }
+    지금앱 = app;
+    document.querySelectorAll("#appSeg .appseg-btn").forEach(function (b) {
+      b.setAttribute("aria-selected", String(b.dataset.app === app));
+    });
+    document.getElementById("navTabs").classList.add("hidden");
+    document.querySelector(".content").classList.add("app-mode");
+    document.querySelectorAll(".screen").forEach(function (s) {
+      s.classList.toggle("hidden", s.id !== "tab-" + app);
+    });
+    mountExamApp(app);
+    호스트테마(시험앱테마(EXAM_KEY[app]));
+  }
+  document.getElementById("appSeg").addEventListener("click", function (e) {
+    var b = e.target.closest(".appseg-btn");
+    if (!b) return;
+    setApp(b.dataset.app);
+  });
 
   function setLearnPanel(name) {
     document.querySelectorAll("#learnTabs .k-tab").forEach(function (b) {
@@ -490,28 +597,45 @@
 
   // 출처·이용조건 — 라이선스가 붙은 글은 화면에 출처를 그대로 보여야 한다(CC BY-SA 등).
   function renderLicense(session) {
-    var box = document.getElementById("licenseBox");
-    if (!box) return;
+    var 상자들 = ["licenseBox", "licenseBoxLearn"].map(function (id) {
+      return document.getElementById(id);
+    }).filter(Boolean);
+    if (!상자들.length) return;
     var lic = session["이용조건"] || {};
-    var url = (session.source && session.source.url) || "";
+    var src = session.source || {};
+    var url = src.url || "";
+    var 라이선스 = lic["라이선스"] || "";
     var 표시 = lic["표시"] || "";
-    if (!표시 && !url) { box.classList.add("hidden"); box.textContent = ""; return; }
-    box.classList.remove("hidden");
-    box.textContent = "";
-    var head = document.createElement("div");
-    head.className = "lic-head";
-    head.textContent = "출처와 이용 조건" + (lic["라이선스"] ? " · " + lic["라이선스"] : "");
-    box.appendChild(head);
-    var body = document.createElement("div");
-    body.className = "lic-body";
-    body.textContent = 표시 || url;
-    box.appendChild(body);
-    if (lic["배포"] === "내부") {
-      var warn = document.createElement("div");
-      warn.className = "lic-warn";
-      warn.textContent = "이 글은 개인 학습용으로만 둡니다. 배포본에는 담기지 않습니다.";
-      box.appendChild(warn);
+    if (!표시) {
+      // 표시 문구를 따로 쓰지 않는 글도 출처는 보여야 한다 — 글 정보로 한 줄을 만든다.
+      var 조각 = [];
+      if (src.source_name) 조각.push(src.source_name);
+      if (src.title) 조각.push(src.title);
+      표시 = 조각.join(" — ");
     }
+    var 덧말 = [];
+    if (url && 표시.indexOf(url) < 0) 덧말.push(url);
+    if (lic["배포"] === "내부") {
+      덧말.push("이용 범위는 개인 학습입니다. 다른 곳에 옮겨 실으려면 이용 조건을 먼저 확인합니다.");
+    }
+    상자들.forEach(function (box) {
+      box.textContent = "";
+      if (!표시 && !url) { box.classList.add("hidden"); return; }
+      box.classList.remove("hidden");
+      var head = document.createElement("div");
+      head.className = "lic-head";
+      head.textContent = "출처" + (라이선스 ? " · " + 라이선스 : "");
+      box.appendChild(head);
+      var body = document.createElement("div");
+      body.className = "lic-body";
+      body.textContent = 표시 || url;
+      box.appendChild(body);
+      if (!덧말.length) return;
+      var note = document.createElement("div");
+      note.className = "lic-note";
+      note.textContent = 덧말.join("\n");
+      box.appendChild(note);
+    });
   }
 
   function renderPassage(session) {
@@ -976,6 +1100,25 @@
     api().clear_api_key().then(function () { toast("API 키를 삭제했습니다."); loadSettings(); })
       .catch(function (e) { toast("삭제 중 오류: " + errText(e)); });
   });
+
+  // ---- 출처·저작권 고지 ----
+  (function () {
+    var 단추 = document.getElementById("noticeBtn");
+    var 창 = document.getElementById("noticeModal");
+    if (!단추 || !창) return;
+    단추.addEventListener("click", function () {
+      var 본문 = document.getElementById("noticeBody");
+      본문.textContent = "불러오는 중…";
+      창.classList.remove("hidden");
+      api().read_notice().then(function (res) {
+        본문.textContent = (res && res.text) || (res && res.error) || "고지를 읽지 못했습니다.";
+      }, function (e) { 본문.textContent = errText(e); });
+    });
+    document.getElementById("noticeClose").addEventListener("click", function () {
+      창.classList.add("hidden");
+    });
+    창.addEventListener("click", function (e) { if (e.target === 창) 창.classList.add("hidden"); });
+  })();
 
   document.addEventListener("pywebviewready", function () {
     loadSettings();
