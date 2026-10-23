@@ -1,5 +1,5 @@
 // 자동 생성(웹배포/_웹올리기.py) — 내용 해시로 판 번호를 매긴다
-const CACHE = 'studyapps-95fc3f900a';
+const CACHE = 'studyapps-6abd6d3c4d';
 const ASSETS = ['./', './index.html', './manifest.webmanifest', './icon-180.png', './icon-192.png', './icon-512.png'];
 self.addEventListener('install', e => {
   // cache:'reload' — 설치 때 브라우저 HTTP 캐시의 옛 파일을 줍지 않도록 강제로 다시 받는다
