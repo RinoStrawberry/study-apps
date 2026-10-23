@@ -1,0 +1,281 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   범피스 KRDS 공용 한 벌 — KRDS v1.0.0 (krds_tokens.css 원문값)
+   근거: 기록/디자인.md §139-2, 승인 시안 아티팩트 5f41dac1(통합 입력·서류 작성).
+   원칙: 파랑(primary)이 상호작용, 경북대 크림슨은 point 계열로 브랜드 표식에만.
+   rem 기준 10px(html 62.5%) — KRDS 토큰 숫자를 원문 그대로 쓴다.
+   셸/창 HTML은 exe 동봉 파일이라 이 파일·폰트를 상대경로로 공유한다(오프라인).
+   ═══════════════════════════════════════════════════════════════════════ */
+/* 웹판은 시스템 글꼴을 쓴다 — 글꼴 파일을 올리지 않는다 */
+:root{
+  /* primary — 상호작용 */
+  --p5:#ecf2fe; --p10:#d8e5fd; --p40:#4c87f6; --p50:#256ef4; --p60:#0b50d0; --p70:#083891;
+  /* gray 계단 */
+  --g0:#ffffff; --g5:#f4f5f6; --g10:#e6e8ea; --g20:#cdd1d5; --g30:#b1b8be;
+  --g40:#8a949e; --g50:#6d7882; --g60:#58616a; --g70:#464c53; --g80:#33363d;
+  --g90:#1e2124; --g95:#131416;
+  /* 의미색 */
+  --dg50:#de3412; --dg5:#fdefec; --wn30:#ffb114; --wn5:#fff3db;
+  --sc50:#228738; --sc5:#eaf6ec; --if50:#0b78cb; --if5:#e7f4fe;
+  --pt50:#d63d4a;            /* KRDS point — 경북대 표식 전용 */
+  /* 별칭 */
+  --ground:var(--g5); --surface:var(--g0); --line:var(--g10); --ctl:var(--g20);
+  --ink:var(--g90); --ink2:var(--g60); --ink3:var(--g40);
+  --brand:var(--p50); --brand-hi:var(--p60); --tint:var(--p5);
+  --font:"Pretendard GOV","Pretendard","Malgun Gothic","맑은 고딕",
+         -apple-system,"Apple SD Gothic Neo",system-ui,sans-serif;
+}
+*{ box-sizing:border-box; margin:0; padding:0; }
+html{ font-size:62.5%; }                    /* 1rem = 10px — KRDS 전제 */
+body{
+  font-family:var(--font); font-size:1.5rem; line-height:1.6; color:var(--ink);
+  background:var(--ground); word-break:keep-all; overflow-wrap:anywhere;
+  -webkit-font-smoothing:antialiased;
+}
+button, input, select, textarea{ font:inherit; color:inherit; }
+::-webkit-scrollbar{ width:8px; height:8px; }
+::-webkit-scrollbar-thumb{ background:var(--g20); border-radius:4px; }
+::-webkit-scrollbar-thumb:hover{ background:var(--g30); }
+::-webkit-scrollbar-track{ background:transparent; }
+
+/* ── 무테 창 껍데기 ─────────────────────────────────────────────── */
+.win{
+  height:100vh; display:flex; flex-direction:column; overflow:hidden;
+  background:var(--ground); border:1px solid var(--g20); border-radius:8px;
+}
+/* 제목줄 — drag-region을 겸한다 */
+.k-cap{
+  flex:none; display:flex; align-items:center; gap:.8rem;
+  padding:.8rem 1rem .8rem 1.4rem; background:var(--surface);
+  border-bottom:1px solid var(--line);
+}
+.k-cap .mark{
+  flex:none; width:2.4rem; height:2.4rem; border-radius:.4rem; background:var(--pt50);
+  color:#fff; font-size:1.1rem; font-weight:700; display:grid; place-items:center;
+}
+/* 이름·부제 — 부제가 길어져(기관명 포함) 한 줄에 두면 창 단추를 밀어낸다.
+   아래로 내리고, 그래도 넘치면 말줄임한다(§142-6). */
+.k-cap .name{
+  font-size:1.5rem; font-weight:700; white-space:nowrap;
+  display:flex; flex-direction:column; line-height:1.15; min-width:0;
+}
+.k-cap .name small{
+  font-size:1rem; font-weight:400; color:var(--ink3);
+  overflow:hidden; text-overflow:ellipsis;
+}
+.k-cap .grow{ flex:1 1 auto; }
+.winbtn{
+  flex:none; width:3.4rem; height:2.8rem; border:0; background:transparent;
+  border-radius:.4rem; cursor:pointer; display:grid; place-items:center;
+  color:var(--ink2); font-size:1.3rem; line-height:1;
+}
+.winbtn:hover{ background:var(--g5); color:var(--ink); }
+.winbtn.close:hover{ background:var(--dg50); color:#fff; }
+.winbtn:focus-visible{ outline:.2rem solid var(--brand); outline-offset:-.2rem; }
+
+/* 상태 배지(한글 연결 등) */
+.k-badge{ display:inline-flex; align-items:center; gap:.5rem; font-size:1.2rem;
+  font-weight:700; padding:.2rem .9rem; border-radius:10rem; white-space:nowrap; }
+.k-badge.ok{ background:var(--sc5); color:var(--sc50); }
+.k-badge.wait{ background:var(--wn5); color:#8a5c00; }
+.k-badge.info{ background:var(--if5); color:var(--if50); }
+.k-badge.mute{ background:var(--g5); color:var(--ink2); }
+.k-badge.point{ background:#fbeef0; color:var(--pt50); }
+.k-badge .dot{ width:.7rem; height:.7rem; border-radius:50%; background:currentColor; }
+
+/* ── 버튼 ───────────────────────────────────────────────────────── */
+.k-btn{
+  appearance:none; font-size:1.5rem; font-weight:700; cursor:pointer;
+  padding:.9rem 1.6rem; border-radius:.4rem; border:.1rem solid transparent;
+  background:var(--brand); color:#fff; white-space:nowrap;
+}
+.k-btn:hover{ background:var(--brand-hi); }
+.k-btn:focus-visible{ outline:.2rem solid var(--brand); outline-offset:.2rem; }
+.k-btn:disabled{ background:var(--g20); color:var(--g50); cursor:default; }
+.k-btn.line{ background:var(--surface); color:var(--brand); border-color:var(--brand); }
+.k-btn.line:hover{ background:var(--tint); }
+.k-btn.ghost{ background:transparent; color:var(--ink2); border-color:var(--ctl); }
+.k-btn.ghost:hover{ background:var(--g5); color:var(--ink); }
+.k-btn.danger{ background:var(--dg50); }
+.k-btn.danger:hover{ background:#b52a0e; }
+.k-btn.sm{ padding:.5rem 1.1rem; font-size:1.3rem; }
+
+/* ── 탭 ─────────────────────────────────────────────────────────── */
+.k-tabs{ display:flex; gap:.4rem; border-bottom:.1rem solid var(--line);
+  overflow-x:auto; background:var(--surface); }
+.k-tab{ appearance:none; border:0; background:none; cursor:pointer;
+  padding:1rem 1.4rem; font-size:1.4rem; color:var(--ink2);
+  border-bottom:.3rem solid transparent; white-space:nowrap; }
+.k-tab[aria-selected="true"]{ color:var(--brand); font-weight:700;
+  border-bottom-color:var(--brand); }
+.k-tab:focus-visible{ outline:.2rem solid var(--brand); outline-offset:-.2rem; }
+
+/* 나브 타일(3×3 탭 지도 — 원본 텍스트탭의 KRDS판) */
+.k-navgrid{ display:grid; grid-template-columns:repeat(3,1fr); gap:.6rem; }
+.k-navtile{
+  appearance:none; cursor:pointer; text-align:center; padding:.7rem .4rem .6rem;
+  background:var(--surface); border:.1rem solid var(--line); border-radius:.4rem;
+  color:var(--ink2);
+}
+.k-navtile b{ display:block; font-size:1.3rem; color:var(--ink); }
+.k-navtile small{ font-size:1rem; color:var(--ink3); }
+.k-navtile:hover{ border-color:var(--brand); }
+.k-navtile[aria-selected="true"]{ background:var(--brand); border-color:var(--brand); }
+.k-navtile[aria-selected="true"] b,
+.k-navtile[aria-selected="true"] small{ color:#fff; }
+.k-navtile.point b{ color:var(--pt50); }
+.k-navtile.point[aria-selected="true"]{ background:var(--pt50); border-color:var(--pt50); }
+.k-navtile.point[aria-selected="true"] b{ color:#fff; }
+.k-navtile:focus-visible{ outline:.2rem solid var(--brand); outline-offset:.2rem; }
+
+/* ── 구역(섹션) ─────────────────────────────────────────────────── */
+.k-sec{ border:.1rem solid var(--line); border-radius:.6rem; overflow:hidden;
+  background:var(--surface); }
+.k-sec > h3{
+  padding:1rem 1.4rem; font-size:1.5rem; font-weight:700;
+  background:var(--ground); border-bottom:.1rem solid var(--line);
+  display:flex; align-items:center; gap:.8rem;
+}
+.k-sec > h3::before{ content:""; width:.3rem; height:1.4rem; border-radius:.2rem;
+  background:var(--brand); }
+.k-sec > h3 .cnt{ margin-left:auto; font-size:1.2rem; font-weight:400; color:var(--ink2); }
+
+/* 폼 행 */
+.k-row{ display:grid; grid-template-columns:9.6rem 1fr; gap:1rem; align-items:start;
+  padding:1rem 1.4rem; border-bottom:.1rem solid var(--line); }
+.k-row:last-child{ border-bottom:0; }
+.k-row > label{ font-size:1.4rem; font-weight:700; padding-top:.6rem; color:var(--ink); }
+.k-row > label .req{ color:var(--dg50); margin-left:.2rem; }
+.k-row.stack{ grid-template-columns:1fr; }
+.k-row.stack > label{ padding-top:0; }
+.k-field{ display:flex; flex-direction:column; gap:.5rem; min-width:0; }
+.k-in{
+  width:100%; font-size:1.5rem; padding:.7rem 1rem; color:var(--ink);
+  background:var(--surface); border:.1rem solid var(--ctl); border-radius:.4rem;
+}
+.k-in::placeholder{ color:var(--ink3); }
+.k-in:focus{ outline:.2rem solid var(--brand); outline-offset:.1rem; border-color:var(--brand); }
+.k-in[readonly]{ background:var(--ground); color:var(--ink2); }
+textarea.k-in{ resize:vertical; min-height:7rem; line-height:1.55; }
+select.k-in{ padding:.6rem .8rem; }
+.k-help{ font-size:1.2rem; color:var(--ink2); }
+.k-err{ font-size:1.2rem; color:var(--dg50); font-weight:700; }
+.k-two{ display:grid; grid-template-columns:1fr 1fr; gap:.8rem; }
+
+/* 체크박스·라디오 — §135 함정: input 폭 공용 규칙 금지, label은 flex */
+.k-check{ display:flex; align-items:center; gap:.7rem; font-size:1.4rem; cursor:pointer; }
+.k-check input{ width:auto; flex:none; width:1.6rem; height:1.6rem; accent-color:var(--brand); }
+
+/* ── 하단 동작 막대 ─────────────────────────────────────────────── */
+.k-bar{ flex:none; display:flex; gap:.8rem; align-items:center;
+  padding:1rem 1.4rem; border-top:.1rem solid var(--line); background:var(--surface);
+  flex-wrap:wrap; }
+.k-bar .spacer{ flex:1 1 auto; }
+
+/* ── 안내문 ─────────────────────────────────────────────────────── */
+.k-note{ display:flex; gap:.9rem; padding:1rem 1.3rem; border-radius:.6rem;
+  background:var(--if5); color:var(--ink); font-size:1.3rem; line-height:1.55;
+  border:.1rem solid var(--line); }
+.k-note .ic{ color:var(--if50); font-weight:700; flex:none; }
+.k-note.warn{ background:var(--wn5); } .k-note.warn .ic{ color:#8a5c00; }
+.k-note.danger{ background:var(--dg5); } .k-note.danger .ic{ color:var(--dg50); }
+
+/* ── 표 ─────────────────────────────────────────────────────────── */
+.k-table{ width:100%; border-collapse:collapse; font-size:1.4rem; }
+.k-table th,.k-table td{ padding:.8rem 1rem; text-align:left;
+  border-bottom:.1rem solid var(--line); }
+.k-table thead th{ background:var(--ground); font-size:1.2rem; font-weight:700;
+  color:var(--ink2); }
+.k-table td.num{ text-align:right; font-variant-numeric:tabular-nums; }
+.k-table tfoot td{ font-weight:700; background:var(--tint); border-bottom:0; }
+.k-table tbody tr:hover td{ background:var(--ground); }
+.k-table tbody tr[aria-selected="true"] td{ background:var(--tint); }
+
+/* ── 단계 표시 ──────────────────────────────────────────────────── */
+.k-steps{ display:flex; list-style:none; overflow-x:auto; }
+.k-steps li{ display:flex; align-items:center; gap:.6rem; padding:1rem 1.4rem 1rem 0;
+  font-size:1.4rem; color:var(--ink3); white-space:nowrap; }
+.k-steps li .n{ width:2rem; height:2rem; border-radius:50%; flex:none;
+  display:grid; place-items:center; font-size:1.2rem; font-weight:700;
+  background:var(--g10); color:var(--ink2); }
+.k-steps li.on{ color:var(--ink); font-weight:700; }
+.k-steps li.on .n{ background:var(--brand); color:#fff; }
+.k-steps li.done .n{ background:var(--sc50); color:#fff; }
+
+/* ── 액션 카드(경북대 탭 홈) ────────────────────────────────────── */
+/* 아이콘 칸 없이 글만으로 읽히게 — 왼쪽 강조선이 카드의 시작을 잡아 준다(§142-10) */
+.k-card{
+  display:flex; gap:1.1rem; align-items:flex-start; text-align:left; width:100%;
+  padding:1rem 1.2rem 1rem 1.4rem; cursor:pointer; position:relative;
+  background:var(--surface); border:.1rem solid var(--line); border-radius:.6rem;
+}
+.k-card::before{
+  content:''; position:absolute; left:0; top:.9rem; bottom:.9rem; width:.3rem;
+  border-radius:0 .3rem .3rem 0; background:var(--line);
+}
+.k-card:hover::before{ background:var(--brand); }
+.k-card:hover{ border-color:var(--brand); background:var(--tint); }
+.k-card:focus-visible{ outline:.2rem solid var(--brand); outline-offset:.2rem; }
+.k-card b{ display:block; font-size:1.4rem; line-height:1.35; }
+.k-card p{ font-size:1.2rem; color:var(--ink2); margin-top:.3rem; line-height:1.5; }
+.k-card .soon{ margin-left:auto; flex:none; align-self:center; }
+
+/* ── 아이콘 버튼 흐름배치(9탭 내용) ─────────────────────────────── */
+.k-flow{ display:flex; flex-wrap:wrap; gap:.5rem; padding:.9rem 1.2rem 1.1rem; }
+.k-tool{
+  appearance:none; cursor:pointer; display:inline-flex; align-items:center; gap:.6rem;
+  padding:.5rem .8rem; background:var(--surface); border:.1rem solid var(--ctl);
+  border-radius:.4rem; font-size:1.3rem; color:var(--ink); max-width:100%;
+}
+.k-tool img{ width:2rem; height:2rem; object-fit:contain; flex:none; }
+.k-tool:hover{ border-color:var(--brand); background:var(--tint); }
+.k-tool:active{ background:var(--p10); }
+.k-tool:focus-visible{ outline:.2rem solid var(--brand); outline-offset:.2rem; }
+.k-tool.busy{ border-color:var(--brand); background:var(--tint); pointer-events:none; }
+
+/* ── 모달 ───────────────────────────────────────────────────────── */
+.k-dim{
+  position:fixed; inset:0; background:rgba(19,20,22,.45); z-index:40;
+  display:flex; align-items:center; justify-content:center; padding:2rem;
+}
+.k-modal{
+  background:var(--surface); border-radius:.8rem; width:100%; max-width:56rem;
+  max-height:calc(100vh - 4rem); display:flex; flex-direction:column; overflow:hidden;
+  box-shadow:0 12px 40px rgba(19,20,22,.28);
+}
+.k-modal > header{
+  flex:none; display:flex; align-items:center; gap:.8rem; padding:1.2rem 1.6rem;
+  border-bottom:.1rem solid var(--line);
+}
+.k-modal > header h2{ font-size:1.7rem; font-weight:700; }
+.k-modal > header .x{ margin-left:auto; }
+.k-modal > .k-modal-body{ overflow-y:auto; padding:1.4rem 1.6rem;
+  display:flex; flex-direction:column; gap:1.2rem; }
+.k-modal > .k-bar{ border-radius:0 0 .8rem .8rem; }
+
+/* ── 토스트 ─────────────────────────────────────────────────────── */
+#toast{
+  position:fixed; left:50%; bottom:2rem; transform:translateX(-50%) translateY(.8rem);
+  max-width:86%; padding:.9rem 1.6rem; border-radius:.6rem; font-size:1.3rem;
+  color:#fff; background:var(--g80); box-shadow:0 6px 20px rgba(19,20,22,.3);
+  opacity:0; pointer-events:none; transition:opacity .18s, transform .18s; z-index:60;
+}
+#toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+
+/* ── 툴팁 ───────────────────────────────────────────────────────── */
+#ktip{
+  position:fixed; z-index:70; max-width:30rem; padding:.6rem 1rem; font-size:1.2rem;
+  line-height:1.5; color:#fff; background:var(--g80); border-radius:.4rem;
+  box-shadow:0 4px 14px rgba(19,20,22,.3); pointer-events:none; opacity:0;
+  transition:opacity .1s;
+}
+#ktip.show{ opacity:1; }
+
+/* 세로 흐름(스크롤) 컨테이너의 자식은 줄어들지 않는다 —
+   flex-shrink 기본값 1이 k-sec(overflow:hidden)의 내용을 잘라먹는 것 방지(§141 AI창) */
+.content > *, .k-modal-body > *{ flex-shrink:0; }
+
+/* 소소한 유틸 */
+.k-kicker{ font-size:1.1rem; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--brand); font-weight:700; }
+.k-title-pt{ color:var(--pt50); }
+.hidden{ display:none !important; }
