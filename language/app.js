@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  var state = { candidates: [], session: null, startTime: null };
+  var state = { candidates: [], session: null, startTime: null, ww: { on: false, level: 4 } };
 
   function api() { return window.pywebview.api; }
 
@@ -427,6 +427,7 @@
     var u = state.units[state.idx];
     var box = document.getElementById("unitTarget");
     box.innerHTML = u ? buildTarget(u) : "";
+    if (u) 뜻얹기타이핑(box, u.text);
     state.chars = box.querySelectorAll(".ch");
 
     var prev = state.idx > 0 ? state.units[state.idx - 1] : null;
@@ -548,6 +549,98 @@
     document.getElementById("unitInput").focus();
   });
 
+  // ---- 어려운 말 위에 작은 뜻(Word Wise) ----
+  // 글마다 붙어 있는 어휘·관용구 해설을 본문 위에 얹는다. 얼마나 쉬운 말까지 얹을지는
+  // 말의 난이도(assets/낱말수준.json, 1=흔함 … 5=드묾)로 가른다.
+  function 뜻얹기(글) {
+    if (!state.ww.on || !state.session || !window.WordWise) return esc(글);
+    return WordWise.꾸미기(글, state.session, state.ww.level);
+  }
+
+  // 치는 글에도 뜻을 붙인다. 위는 요미가나 자리라 뜻은 아래에 둔다.
+  // 글자 span 은 건드리지 않고 바깥만 감싸므로 타이핑 되먹임은 그대로다.
+  function 뜻얹기타이핑(box, 글) {
+    if (!state.ww.on || !window.WordWise || !state.session) return;
+    var 자리들 = WordWise.찾기(글, state.session, state.ww.level);
+    if (!자리들.length) return;
+    var spans = box.querySelectorAll(".ch");
+    if (!spans.length) return;
+    box.classList.add("ww-on");
+    // 뒤에서부터 감싸야 앞의 자리 번호가 흔들리지 않는다
+    for (var k = 자리들.length - 1; k >= 0; k--) {
+      var m = 자리들[k];
+      var 첫 = spans[m.자리], 막 = spans[m.자리 + m.길이 - 1];
+      if (!첫 || !막) continue;
+      // 요미가나가 붙은 토막 한복판이면 건너뛴다(읽기를 깨뜨리지 않는다)
+      var 부모 = 첫.parentNode;
+      if (막.parentNode !== 부모) {
+        if (첫.parentNode.parentNode !== 막.parentNode.parentNode) continue;
+        부모 = 첫.parentNode.parentNode;
+        첫 = 첫.parentNode;
+        막 = 막.parentNode;
+      }
+      var ruby = document.createElement("ruby");
+      ruby.className = "ww under";
+      부모.insertBefore(ruby, 첫);
+      var 지금 = 첫;
+      while (지금) {
+        var 다음 = 지금 === 막 ? null : 지금.nextSibling;
+        ruby.appendChild(지금);
+        지금 = 다음;
+      }
+      var rt = document.createElement("rt");
+      rt.textContent = m.뜻;
+      ruby.appendChild(rt);
+    }
+  }
+
+  function 그리기전문(session) {
+    var full = document.getElementById("fullText");
+    var 글 = ((session || state.session) || {}).practice_target || "";
+    if (state.ww.on && window.WordWise) {
+      full.innerHTML = WordWise.꾸미기(글, session || state.session, state.ww.level);
+      full.classList.add("ww-on");
+    } else {
+      full.textContent = 글;
+      full.classList.remove("ww-on");
+    }
+  }
+
+  // 사전 단어(300개)도 글 위에 얹으려면 목록을 한 번 받아 둬야 한다.
+  function 사전채우기(lang) {
+    if (!window.WordWise || !lang || WordWise.사전있나(lang)) return Promise.resolve();
+    return Promise.all(["easy", "mid", "hard"].map(function (lv) {
+      return api().vocab_list(lang, lv)["catch"](function () { return null; });
+    })).then(function (묶음) {
+      var rows = [];
+      묶음.forEach(function (r) { if (r && r.rows) rows = rows.concat(r.rows); });
+      WordWise.사전넣기(lang, rows);
+    });
+  }
+
+  function 뜻설정바뀜() {
+    document.getElementById("wwLevel").disabled = !state.ww.on;
+    그리기전문(state.session);
+    if (state.units) renderUnit();
+    if (state.session) renderLearn(state.session);
+    api().save_reading_prefs({ wordwise: state.ww.on, wordwise_level: state.ww.level })
+      ["catch"](function () { /* 기억하지 못해도 화면은 그대로 쓴다 */ });
+  }
+
+  document.getElementById("wwChk").addEventListener("change", function () {
+    state.ww.on = this.checked;
+    if (state.ww.on && window.WordWise) {
+      var lang = (state.session || {}).language;
+      Promise.all([WordWise.준비(), 사전채우기(lang)]).then(function () { 뜻설정바뀜(); });
+      return;
+    }
+    뜻설정바뀜();
+  });
+  document.getElementById("wwLevel").addEventListener("change", function () {
+    state.ww.level = parseInt(this.value, 10) || 4;
+    뜻설정바뀜();
+  });
+
   document.getElementById("rubyChk").addEventListener("change", function () {
     state.showRuby = this.checked;
     renderUnit();
@@ -646,7 +739,7 @@
     renderLicense(session);
     // 전문은 접어 둔다 — 띄워 놓으면 눈이 훑기만 하고 손이 따라가지 않는다.
     var full = document.getElementById("fullText");
-    full.textContent = session.practice_target || "";
+    그리기전문(session);
     full.classList.add("hidden");
     var btn = document.getElementById("fullTextBtn");
     btn.textContent = "전문 보기";
@@ -802,7 +895,7 @@
       // 문체 설명(register_ko)은 왜 그렇게 옮겼는지를 알려 주는 대목이라 함께 보여 준다.
       var reg = pick(s, "register_ko", "register", "tone_ko");
       return '<div class="learn-item"><div class="quote">문단 ' + s.paragraph_index + '</div>' +
-        (src ? '<p class="src-para">' + esc(src) + '</p>' : "") +
+        (src ? '<p class="src-para' + (state.ww.on ? ' ww-on' : '') + '">' + 뜻얹기(src) + '</p>' : "") +
         '<p>직역: ' + esc(s.ko_literal) + '</p>' +
         '<p>번역: ' + esc(s.ko_natural) + '</p>' +
         (reg ? '<p class="why">문체: ' + esc(reg) + '</p>' : "") +
@@ -1079,6 +1172,13 @@
       var badge = document.getElementById("keyStatus");
       badge.textContent = s.has_key ? "키 등록됨" : "키 미등록";
       badge.className = "k-badge " + (s.has_key ? "ok" : "mute");
+      var rp = s.reading_prefs || {};
+      state.ww.on = !!rp.wordwise;
+      state.ww.level = rp.wordwise_level || 4;
+      document.getElementById("wwChk").checked = state.ww.on;
+      document.getElementById("wwLevel").value = String(state.ww.level);
+      document.getElementById("wwLevel").disabled = !state.ww.on;
+      if (state.ww.on && window.WordWise) WordWise.준비();
     }).catch(function (e) { toast("설정을 불러오는 중 오류: " + errText(e)); });
   }
 

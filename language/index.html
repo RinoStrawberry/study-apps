@@ -46,8 +46,10 @@
   }
   var api = {
     get_status: function () {
-      return Promise.resolve({ has_key: false, model: '', default_language: 'en', default_difficulty: 'mid', web: true });
+      return Promise.resolve({ has_key: false, model: '', default_language: 'en', default_difficulty: 'mid',
+        reading_prefs: local('reading_prefs', {}), web: true });
     },
+    save_reading_prefs: function (v) { return Promise.resolve(save('reading_prefs', v)); },
     load_settings: function () { return Promise.resolve(local('settings', {})); },
     save_settings: function (v) { return Promise.resolve(save('settings', v)); },
     list_history: function () { return j('./data/history.json'); },
@@ -187,6 +189,12 @@
             </div>
           </div>
           <div class="unit-foot">
+            <label class="k-check" id="wwWrap"><input type="checkbox" id="wwChk"> 뜻 보기</label>
+            <select class="k-in ww-level" id="wwLevel" aria-label="뜻을 얹을 말의 범위" disabled>
+              <option value="5">어려운 말만</option>
+              <option value="4" selected>보통</option>
+              <option value="2">많이</option>
+            </select>
             <span class="spacer"></span>
             <label class="k-check" id="rubyWrap"><input type="checkbox" id="rubyChk" checked> 요미가나</label>
             <button class="k-btn ghost sm" id="fullTextBtn" aria-expanded="false">전문 보기</button>
@@ -458,6 +466,7 @@
 
 <div id="toast"></div>
 
+<script src="wordwise.js"></script>
 <script src="app.js"></script>
 <script src="vocab.js"></script>
 </body>

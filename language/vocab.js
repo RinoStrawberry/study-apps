@@ -237,6 +237,7 @@
         '<div class="vd-conf-w" lang="' + esc(w.language) + '">' + R(w, base + ".word", c.word) + "</div>" +
         '<div class="vd-conf-d">' + bi(w, c.difference, base + ".difference") +
         (c.example ? '<div class="vd-conf-ex" lang="' + esc(w.language) + '">' + R(w, base + ".example", c.example) + "</div>" : "") +
+        (c.example_ko ? '<div class="vd-conf-exko">' + esc(c.example_ko) + "</div>" : "") +
         "</div></div>";
     }).join("") + "</div>";
   }
