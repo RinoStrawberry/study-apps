@@ -58,10 +58,15 @@ window.WordWise = (function () {
       }
       if (모음.length) s = 모음.join(" · ");
     }
-    if (s.length > 14) {
-      var 자름 = s.slice(0, 14);
+    if (s.length > 16) {
+      var 자름 = s.slice(0, 16);
       var i = Math.max(자름.lastIndexOf(","), 자름.lastIndexOf(" "), 자름.lastIndexOf("·"));
       s = (i > 8 ? 자름.slice(0, i) : 자름).trim();
+      // "~에 대한 강력한" 처럼 꾸미는 말로 끝나면 읽다 말게 되므로 그 끝말을 떼어 낸다
+      var 끝말 = s.split(" ").pop();
+      if (s.indexOf(" ") > 0 && /(한|된|는|할|적인|스러운)$/.test(끝말)) {
+        s = s.slice(0, s.length - 끝말.length).trim();
+      }
     }
     return s.replace(/[\s,·\/]+$/, "");
   }
@@ -90,12 +95,12 @@ window.WordWise = (function () {
     (an.vocabulary || []).forEach(function (it) {
       var 말 = String(it.word || "").trim();
       var 뜻 = 짧게(it.meaning_ko);
-      if (말 && 뜻) out.push({ 말: 말, 뜻: 뜻, 종류: "word" });
+      if (말 && 뜻) out.push({ 말: 말, 뜻: 뜻, 온전한뜻: String(it.meaning_ko || "").trim(), 종류: "word" });
     });
     (an.idioms || []).forEach(function (it) {
       var 말 = 벗기기(it.phrase);
       var 뜻 = 짧게(it.meaning_ko);
-      if (말 && 뜻) out.push({ 말: 말, 뜻: 뜻, 종류: "idiom" });
+      if (말 && 뜻) out.push({ 말: 말, 뜻: 뜻, 온전한뜻: String(it.meaning_ko || "").trim(), 종류: "idiom" });
     });
     return out;
   }
@@ -108,7 +113,8 @@ window.WordWise = (function () {
       var 말 = String(w.headword || "").trim();
       var 뜻 = 짧게((w.summary && w.summary.ko) || "");
       if (!말 || !뜻) return;
-      칸[말] = { 뜻: 뜻, 수준: w.level === "easy" ? 2 : w.level === "mid" ? 3 : 4 };
+      칸[말] = { 뜻: 뜻, 온전한뜻: String((w.summary && w.summary.ko) || "").trim(),
+                수준: w.level === "easy" ? 2 : w.level === "mid" ? 3 : 4 };
     });
     사전[lang] = 칸;
   }
@@ -136,7 +142,7 @@ window.WordWise = (function () {
       if (이미[말]) return;
       // 일본어 한 글자(気·手 같은 것)는 다른 낱말 속에도 끼어 있어 얹으면 어지럽다
       if (lang === "ja" && 말.length < 2) return;
-      목표.push({ 말: 말, 뜻: 책[말].뜻, 종류: "book", 수준: 책[말].수준 });
+      목표.push({ 말: 말, 뜻: 책[말].뜻, 온전한뜻: 책[말].온전한뜻, 종류: "book", 수준: 책[말].수준 });
     });
 
     목표.forEach(function (t) {
@@ -145,7 +151,7 @@ window.WordWise = (function () {
       var m, 횟수 = 0;
       while ((m = re.exec(본)) !== null) {
         if (m[0].length === 0) { re.lastIndex += 1; continue; }
-        찾음.push({ 자리: m.index, 길이: m[0].length, 글자: m[0], 뜻: t.뜻 });
+        찾음.push({ 자리: m.index, 길이: m[0].length, 글자: m[0], 뜻: t.뜻, 온전한뜻: t.온전한뜻 || t.뜻 });
         횟수 += 1;
         if (횟수 >= 한말최대) break;
       }
@@ -173,7 +179,8 @@ window.WordWise = (function () {
     var 커서 = 0;
     쓸것.forEach(function (f) {
       html += esc(본.slice(커서, f.자리));
-      html += '<ruby class="ww">' + esc(f.글자) + "<rt>" + esc(f.뜻) + "</rt></ruby>";
+      var 토씨 = (f.온전한뜻 && f.온전한뜻 !== f.뜻) ? ' title="' + esc(f.온전한뜻) + '"' : "";
+      html += '<ruby class="ww"' + 토씨 + ">" + esc(f.글자) + "<rt>" + esc(f.뜻) + "</rt></ruby>";
       커서 = f.자리 + f.길이;
     });
     html += esc(본.slice(커서));

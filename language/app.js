@@ -588,6 +588,7 @@
         ruby.appendChild(지금);
         지금 = 다음;
       }
+      if (m.온전한뜻 && m.온전한뜻 !== m.뜻) ruby.title = m.온전한뜻;
       var rt = document.createElement("rt");
       rt.textContent = m.뜻;
       ruby.appendChild(rt);
